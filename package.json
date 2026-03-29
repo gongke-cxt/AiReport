@@ -1,0 +1,22 @@
+{
+  "name": "aireport",
+  "private": true,
+  "description": "AI 智能报表平台 — monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @aireport/web",
+    "build": "npm run build -w @aireport/web",
+    "typecheck": "npm run typecheck -w @aireport/dsl-types && npm run typecheck -w @aireport/web",
+    "validate:dsl": "npm run validate -w @aireport/dsl-schema"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

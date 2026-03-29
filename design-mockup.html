@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AiReport 智报 - AI驱动的智能报表平台</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+:root {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+  --primary-bg: #eef2ff;
+  --accent: #7c3aed;
+  --accent-light: #a78bfa;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-hover: #f8fafc;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.1);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --sidebar-w: 260px;
+  --topbar-h: 64px;
+  --gradient: linear-gradient(135deg, #6366f1, #7c3aed);
+  --gradient-soft: linear-gradient(135deg, #eef2ff, #ede9fe);
+  --gradient-hero: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:14px; }
+body {
+  font-family: 'Noto Sans SC', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
+/* ============ APP LAYOUT ============ */
+#app { display:flex; height:100vh; }
+
+/* ============ SIDEBAR ============ */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  color: #e0e7ff;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform .3s;
+}
+.sidebar-logo {
+  padding: 24px 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-logo .logo-icon {
+  width: 40px; height: 40px;
+  background: var(--gradient);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: #fff;
+  box-shadow: 0 4px 12px rgba(99,102,241,.4);
+}
+.sidebar-logo .logo-text { font-size:18px; font-weight:700; color:#fff; }
+.sidebar-logo .logo-sub { font-size:11px; color:#a5b4fc; margin-top:2px; }
+
+.sidebar-nav { flex:1; padding:16px 12px; overflow-y:auto; }
+.nav-section { margin-bottom:8px; }
+.nav-section-title {
+  font-size:11px; font-weight:600; text-transform:uppercase;
+  color:#6366f1; padding:8px 12px 6px; letter-spacing:.5px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:10px; cursor:pointer;
+  transition: all .2s; font-size:13.5px; font-weight:500;
+  color:#c7d2fe;
+}
+.nav-item:hover { background:rgba(255,255,255,.08); color:#fff; }
+.nav-item.active { background:rgba(99,102,241,.3); color:#fff; }
+.nav-item .material-icons-outlined { font-size:20px; }
+.nav-item .badge {
+  margin-left:auto; background:#6366f1; color:#fff;
+  font-size:11px; padding:1px 7px; border-radius:10px; font-weight:600;
+}
+
+.sidebar-user {
+  padding:16px; border-top:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; gap:10px;
+}
+.sidebar-user .avatar {
+  width:36px; height:36px; border-radius:10px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; color:#fff;
+}
+.sidebar-user .user-info { flex:1; }
+.sidebar-user .user-name { font-size:13px; font-weight:600; color:#fff; }
+.sidebar-user .user-role { font-size:11px; color:#a5b4fc; }
+
+/* ============ MAIN ============ */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* ============ TOPBAR ============ */
+#topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 28px; gap:16px;
+  box-shadow: var(--shadow-sm);
+}
+.topbar-title { font-size:16px; font-weight:600; flex:1; }
+.topbar-search {
+  display:flex; align-items:center; gap:8px;
+  background: var(--bg); border:1px solid var(--border);
+  border-radius:10px; padding:8px 14px; width:280px;
+  transition: all .2s;
+}
+.topbar-search:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+.topbar-search input {
+  border:none; background:none; outline:none;
+  font-size:13px; color:var(--text); width:100%; font-family:inherit;
+}
+.topbar-search .material-icons-outlined { font-size:18px; color:var(--text-muted); }
+.topbar-actions { display:flex; align-items:center; gap:8px; }
+.topbar-btn {
+  width:38px; height:38px; border-radius:10px; border:none;
+  background:transparent; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:all .2s;
+  color:var(--text-secondary);
+}
+.topbar-btn:hover { background:var(--bg); color:var(--primary); }
+
+/* ============ VIEWS ============ */
+.view { display:none; flex:1; overflow-y:auto; padding:28px; }
+.view.active { display:block; }
+
+/* ============ HOME VIEW ============ */
+.hero-banner {
+  background: var(--gradient-hero);
+  border-radius: var(--radius-xl);
+  padding: 40px 44px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.hero-banner::before {
+  content:''; position:absolute; top:-50%; right:-20%;
+  width:500px; height:500px;
+  background: radial-gradient(circle, rgba(255,255,255,.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-banner::after {
+  content:''; position:absolute; bottom:-30%; left:30%;
+  width:300px; height:300px;
+  background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-banner h1 { font-size:28px; font-weight:700; margin-bottom:8px; position:relative; z-index:1; }
+.hero-banner p { font-size:15px; opacity:.85; max-width:500px; line-height:1.6; position:relative; z-index:1; }
+.hero-actions { display:flex; gap:12px; margin-top:24px; position:relative; z-index:1; }
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 20px; border-radius:10px; font-size:13.5px;
+  font-weight:600; cursor:pointer; transition:all .2s;
+  border:none; font-family:inherit;
+}
+.btn-white { background:#fff; color:var(--primary-dark); }
+.btn-white:hover { background:#eef2ff; transform:translateY(-1px); box-shadow:var(--shadow-md); }
+.btn-outline-white { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3); }
+.btn-outline-white:hover { background:rgba(255,255,255,.25); }
+.btn-primary { background:var(--gradient); color:#fff; }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(99,102,241,.4); }
+.btn-ghost { background:transparent; color:var(--text-secondary); }
+.btn-ghost:hover { background:var(--bg); color:var(--primary); }
+.btn .material-icons-outlined { font-size:18px; }
+
+.quick-actions { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:28px; }
+.quick-card {
+  background:var(--surface); border-radius:var(--radius);
+  padding:24px; cursor:pointer; transition:all .3s;
+  border:1px solid var(--border); position:relative; overflow:hidden;
+}
+.quick-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:var(--primary-light); }
+.quick-card .card-icon {
+  width:48px; height:48px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; margin-bottom:16px;
+}
+.quick-card .card-icon.ai { background:linear-gradient(135deg, #eef2ff, #ede9fe); color:var(--primary); }
+.quick-card .card-icon.tpl { background:linear-gradient(135deg, #ecfdf5, #d1fae5); color:var(--success); }
+.quick-card .card-icon.report { background:linear-gradient(135deg, #eff6ff, #dbeafe); color:var(--info); }
+.quick-card .card-icon.screen { background:linear-gradient(135deg, #fef3c7, #fde68a); color:var(--warning); }
+.quick-card h3 { font-size:15px; font-weight:600; margin-bottom:6px; }
+.quick-card p { font-size:12.5px; color:var(--text-secondary); line-height:1.5; }
+.quick-card .arrow { position:absolute; top:24px; right:24px; color:var(--text-muted); font-size:18px; transition:all .2s; }
+.quick-card:hover .arrow { color:var(--primary); transform:translateX(3px); }
+
+.section-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:16px;
+}
+.section-header h2 { font-size:17px; font-weight:600; }
+.section-header a { font-size:13px; color:var(--primary); cursor:pointer; text-decoration:none; font-weight:500; }
+.section-header a:hover { text-decoration:underline; }
+
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+.stat-card {
+  background:var(--surface); border-radius:var(--radius);
+  padding:20px; border:1px solid var(--border);
+}
+.stat-card .stat-label { font-size:12.5px; color:var(--text-secondary); margin-bottom:8px; }
+.stat-card .stat-value { font-size:26px; font-weight:700; color:var(--text); }
+.stat-card .stat-change {
+  font-size:12px; font-weight:600; margin-top:6px;
+  display:flex; align-items:center; gap:4px;
+}
+.stat-card .stat-change.up { color:var(--success); }
+.stat-card .stat-change.down { color:var(--error); }
+
+.recent-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+.recent-card {
+  background:var(--surface); border-radius:var(--radius);
+  border:1px solid var(--border); overflow:hidden; cursor:pointer;
+  transition:all .3s;
+}
+.recent-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.recent-card .card-thumb {
+  height:160px; position:relative; overflow:hidden;
+}
+.recent-card .card-thumb img,
+.recent-card .card-thumb .thumb-placeholder {
+  width:100%; height:100%; object-fit:cover;
+}
+.thumb-placeholder {
+  display:flex; align-items:center; justify-content:center;
+  font-size:40px; color:var(--text-muted);
+}
+.thumb-placeholder.t1 { background:linear-gradient(135deg, #eef2ff, #e0e7ff); }
+.thumb-placeholder.t2 { background:linear-gradient(135deg, #ecfdf5, #d1fae5); }
+.thumb-placeholder.t3 { background:linear-gradient(135deg, #fef3c7, #fde68a); }
+.thumb-placeholder.t4 { background:linear-gradient(135deg, #fce7f3, #fbcfe8); }
+.thumb-placeholder.t5 { background:linear-gradient(135deg, #e0f2fe, #bae6fd); }
+.thumb-placeholder.t6 { background:linear-gradient(135deg, #f3e8ff, #e9d5ff); }
+.card-type-badge {
+  position:absolute; top:12px; left:12px;
+  padding:3px 10px; border-radius:6px; font-size:11px; font-weight:600;
+  backdrop-filter:blur(8px);
+}
+.badge-report { background:rgba(59,130,246,.15); color:#3b82f6; }
+.badge-dashboard { background:rgba(124,58,237,.15); color:#7c3aed; }
+.recent-card .card-body { padding:16px; }
+.recent-card .card-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.recent-card .card-meta {
+  font-size:12px; color:var(--text-muted);
+  display:flex; align-items:center; gap:12px;
+}
+
+/* ============ AI CREATE VIEW ============ */
+.ai-view { display:none; flex:1; overflow:hidden; padding:0 !important; }
+.ai-view.active { display:flex; }
+.ai-left {
+  width:420px; min-width:420px; border-right:1px solid var(--border);
+  display:flex; flex-direction:column; background:var(--surface);
+}
+.ai-header {
+  padding:24px 24px 16px; border-bottom:1px solid var(--border-light);
+}
+.ai-header h2 {
+  font-size:18px; font-weight:700;
+  background: var(--gradient); -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent; margin-bottom:4px;
+}
+.ai-header p { font-size:13px; color:var(--text-secondary); }
+
+.ai-suggestions {
+  padding:16px 24px; display:flex; flex-wrap:wrap; gap:8px;
+  border-bottom:1px solid var(--border-light);
+}
+.suggestion-chip {
+  padding:6px 14px; border-radius:20px; font-size:12.5px;
+  background:var(--primary-bg); color:var(--primary-dark);
+  cursor:pointer; transition:all .2s; border:1px solid transparent;
+  font-weight:500;
+}
+.suggestion-chip:hover { border-color:var(--primary); background:#ddd6fe; color:var(--accent); }
+
+.ai-chat { flex:1; overflow-y:auto; padding:20px 24px; }
+.chat-msg { display:flex; gap:10px; margin-bottom:20px; }
+.chat-msg .msg-avatar {
+  width:32px; height:32px; border-radius:10px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+.chat-msg .msg-avatar.ai {
+  background:var(--gradient); color:#fff;
+}
+.chat-msg .msg-avatar.user {
+  background:#e0e7ff; color:var(--primary);
+}
+.chat-msg .msg-body {
+  flex:1; padding:12px 16px; border-radius:12px;
+  font-size:13.5px; line-height:1.7;
+}
+.chat-msg.ai-msg .msg-body { background:var(--bg); }
+.chat-msg.user-msg .msg-body { background:var(--primary-bg); }
+.msg-body .outline-item {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 0; font-size:13px;
+}
+.msg-body .outline-item .material-icons-outlined { font-size:16px; color:var(--primary); }
+
+.ai-input-area {
+  padding:16px 24px; border-top:1px solid var(--border);
+  background:var(--surface);
+}
+.ai-input-wrap {
+  display:flex; gap:8px; align-items:flex-end;
+}
+.ai-input-wrap textarea {
+  flex:1; border:1px solid var(--border); border-radius:12px;
+  padding:12px 16px; font-size:13.5px; font-family:inherit;
+  resize:none; outline:none; min-height:44px; max-height:120px;
+  transition:border-color .2s; line-height:1.5;
+}
+.ai-input-wrap textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+.ai-send-btn {
+  width:44px; height:44px; border-radius:12px; border:none;
+  background:var(--gradient); color:#fff; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s; flex-shrink:0;
+}
+.ai-send-btn:hover { transform:scale(1.05); box-shadow:0 4px 12px rgba(99,102,241,.4); }
+.ai-options { display:flex; gap:8px; margin-top:10px; }
+.ai-opt-btn {
+  padding:5px 12px; border-radius:8px; font-size:12px;
+  border:1px solid var(--border); background:var(--surface);
+  cursor:pointer; color:var(--text-secondary); transition:all .2s;
+  font-family:inherit;
+}
+.ai-opt-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-bg); }
+
+.ai-right { flex:1; background:var(--bg); display:flex; flex-direction:column; overflow:hidden; }
+.ai-preview-bar {
+  padding:16px 24px; background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.ai-preview-bar .preview-title { font-size:14px; font-weight:600; }
+.preview-actions { display:flex; gap:8px; }
+.ai-preview-content {
+  flex:1; overflow-y:auto; padding:24px;
+  display:flex; align-items:flex-start; justify-content:center;
+}
+.preview-canvas {
+  width:100%; max-width:1000px; background:var(--surface);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
+  overflow:hidden; min-height:600px;
+}
+
+/* ============ TEMPLATES VIEW ============ */
+.tpl-header { margin-bottom:24px; }
+.tpl-header h1 { font-size:24px; font-weight:700; margin-bottom:8px; }
+.tpl-header p { font-size:14px; color:var(--text-secondary); }
+.tpl-filters {
+  display:flex; align-items:center; gap:8px; margin-bottom:24px;
+  flex-wrap:wrap;
+}
+.tpl-filter {
+  padding:7px 18px; border-radius:20px; font-size:13px;
+  border:1px solid var(--border); background:var(--surface);
+  cursor:pointer; transition:all .2s; font-weight:500; font-family:inherit;
+  color:var(--text-secondary);
+}
+.tpl-filter:hover { border-color:var(--primary); color:var(--primary); }
+.tpl-filter.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.tpl-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+.tpl-card {
+  background:var(--surface); border-radius:var(--radius);
+  border:1px solid var(--border); overflow:hidden; cursor:pointer;
+  transition:all .3s; position:relative;
+}
+.tpl-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-xl); }
+.tpl-card .tpl-thumb {
+  height:180px; position:relative; overflow:hidden;
+}
+.tpl-card .tpl-overlay {
+  position:absolute; inset:0; background:rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .3s;
+}
+.tpl-card:hover .tpl-overlay { opacity:1; }
+.tpl-card .tpl-body { padding:14px 16px; }
+.tpl-card .tpl-name { font-size:14px; font-weight:600; margin-bottom:4px; }
+.tpl-card .tpl-desc { font-size:12px; color:var(--text-muted); }
+.tpl-card .tpl-tag {
+  position:absolute; top:12px; right:12px;
+  padding:3px 10px; border-radius:6px; font-size:11px; font-weight:600;
+  background:rgba(255,255,255,.9); color:var(--text);
+}
+
+/* ============ EDITOR VIEW ============ */
+.editor-view { display:none; flex:1; overflow:hidden; padding:0 !important; }
+.editor-view.active { display:flex; flex-direction:column; }
+.editor-toolbar {
+  height:50px; background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 16px; gap:6px;
+}
+.editor-toolbar .divider { width:1px; height:24px; background:var(--border); margin:0 8px; }
+.toolbar-btn {
+  height:34px; padding:0 12px; border-radius:8px; border:none;
+  background:transparent; cursor:pointer; display:flex;
+  align-items:center; gap:6px; font-size:12.5px; color:var(--text-secondary);
+  transition:all .2s; font-family:inherit; font-weight:500;
+}
+.toolbar-btn:hover { background:var(--bg); color:var(--primary); }
+.toolbar-btn .material-icons-outlined { font-size:18px; }
+.editor-body { flex:1; display:flex; overflow:hidden; }
+.editor-panel-left {
+  width:260px; background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.panel-tabs {
+  display:flex; border-bottom:1px solid var(--border);
+}
+.panel-tab {
+  flex:1; padding:10px; text-align:center; font-size:12.5px;
+  font-weight:600; cursor:pointer; border-bottom:2px solid transparent;
+  color:var(--text-secondary); transition:all .2s;
+}
+.panel-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+.panel-content { flex:1; overflow-y:auto; padding:12px; }
+.component-group { margin-bottom:16px; }
+.component-group-title {
+  font-size:11.5px; font-weight:600; color:var(--text-muted);
+  text-transform:uppercase; padding:4px 8px 8px; letter-spacing:.3px;
+}
+.component-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.component-item {
+  display:flex; flex-direction:column; align-items:center;
+  padding:10px 4px; border-radius:8px; cursor:grab;
+  transition:all .2s; gap:6px; border:1px solid transparent;
+}
+.component-item:hover { background:var(--primary-bg); border-color:var(--primary-light); }
+.component-item .material-icons-outlined { font-size:22px; color:var(--primary); }
+.component-item span { font-size:11px; color:var(--text-secondary); }
+
+.editor-canvas {
+  flex:1; background:#e8ecf1; overflow:auto; padding:32px;
+  background-image:
+    radial-gradient(circle, #d1d5db 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.canvas-paper {
+  width:960px; min-height:720px; background:var(--surface);
+  margin:0 auto; border-radius:4px; box-shadow:var(--shadow-lg);
+  padding:24px; position:relative;
+}
+.canvas-widget {
+  border:2px dashed transparent; border-radius:8px;
+  padding:8px; transition:border-color .2s; position:relative;
+}
+.canvas-widget:hover { border-color:var(--primary-light); }
+.canvas-widget.selected { border-color:var(--primary); border-style:solid; }
+.widget-label {
+  position:absolute; top:-10px; left:8px; background:var(--primary);
+  color:#fff; font-size:10px; padding:1px 8px; border-radius:4px;
+  opacity:0; transition:opacity .2s;
+}
+.canvas-widget:hover .widget-label { opacity:1; }
+
+.editor-panel-right {
+  width:280px; background:var(--surface); border-left:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.prop-section { padding:14px 16px; border-bottom:1px solid var(--border-light); }
+.prop-section-title { font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:.3px; }
+.prop-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.prop-label { font-size:12.5px; color:var(--text-secondary); width:60px; flex-shrink:0; }
+.prop-input {
+  flex:1; padding:6px 10px; border:1px solid var(--border);
+  border-radius:6px; font-size:12.5px; outline:none; font-family:inherit;
+}
+.prop-input:focus { border-color:var(--primary); }
+.prop-select {
+  flex:1; padding:6px 10px; border:1px solid var(--border);
+  border-radius:6px; font-size:12.5px; outline:none; font-family:inherit;
+  background:var(--surface);
+}
+.prop-color {
+  width:28px; height:28px; border-radius:6px; border:1px solid var(--border);
+  cursor:pointer; padding:0;
+}
+
+/* ============ DATASOURCE VIEW ============ */
+.ds-grid { display:grid; grid-template-columns:260px 1fr; gap:24px; }
+.ds-sidebar-card {
+  background:var(--surface); border-radius:var(--radius);
+  border:1px solid var(--border); overflow:hidden;
+}
+.ds-sidebar-card .ds-add-btn {
+  display:flex; align-items:center; gap:8px; padding:14px 16px;
+  border-bottom:1px solid var(--border); cursor:pointer;
+  font-size:13.5px; font-weight:600; color:var(--primary);
+  transition:background .2s;
+}
+.ds-sidebar-card .ds-add-btn:hover { background:var(--primary-bg); }
+.ds-list { }
+.ds-item {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 16px; cursor:pointer; transition:all .2s;
+  border-left:3px solid transparent;
+}
+.ds-item:hover { background:var(--surface-hover); }
+.ds-item.active { background:var(--primary-bg); border-left-color:var(--primary); }
+.ds-item .ds-icon {
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700;
+}
+.ds-item .ds-info { flex:1; }
+.ds-item .ds-name { font-size:13px; font-weight:600; }
+.ds-item .ds-type { font-size:11px; color:var(--text-muted); }
+.ds-item .ds-status {
+  width:8px; height:8px; border-radius:50%;
+}
+.ds-status.online { background:var(--success); box-shadow:0 0 6px rgba(16,185,129,.4); }
+.ds-status.offline { background:var(--error); }
+
+.ds-detail {
+  background:var(--surface); border-radius:var(--radius);
+  border:1px solid var(--border);
+}
+.ds-detail-header {
+  padding:20px 24px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.ds-detail-header h3 { font-size:16px; font-weight:600; }
+.ds-detail-body { padding:24px; }
+.ds-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ds-form-group { }
+.ds-form-group label { display:block; font-size:12.5px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+.ds-form-group input, .ds-form-group select {
+  width:100%; padding:9px 14px; border:1px solid var(--border);
+  border-radius:8px; font-size:13px; outline:none; font-family:inherit;
+  transition:border-color .2s;
+}
+.ds-form-group input:focus, .ds-form-group select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+.ds-form-group.full { grid-column:1/-1; }
+.ds-tables { margin-top:24px; }
+.ds-table-list {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;
+}
+.ds-table-item {
+  display:flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:8px; border:1px solid var(--border);
+  font-size:12.5px; cursor:pointer; transition:all .2s;
+}
+.ds-table-item:hover { border-color:var(--primary); background:var(--primary-bg); }
+.ds-table-item .material-icons-outlined { font-size:16px; color:var(--primary); }
+
+/* ============ DASHBOARD PREVIEW ============ */
+.dashboard-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:#0f172a; color:#e2e8f0;
+  flex-direction:column;
+}
+.dashboard-overlay.active { display:flex; }
+.dash-header {
+  height:56px; background:rgba(15,23,42,.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex; align-items:center; padding:0 24px;
+}
+.dash-header .dash-title { flex:1; font-size:16px; font-weight:600; color:#f1f5f9; }
+.dash-header .dash-time { font-size:13px; color:#94a3b8; margin-right:16px; }
+.dash-close {
+  width:36px; height:36px; border-radius:8px; border:none;
+  background:rgba(255,255,255,.06); color:#94a3b8;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.dash-close:hover { background:rgba(255,255,255,.12); color:#fff; }
+.dash-body { flex:1; overflow-y:auto; padding:20px 24px; }
+.dash-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.dash-kpi {
+  background: linear-gradient(135deg, rgba(30,41,59,.8), rgba(51,65,85,.6));
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px; padding:20px 24px;
+  backdrop-filter:blur(8px);
+}
+.dash-kpi .kpi-label { font-size:12.5px; color:#94a3b8; margin-bottom:6px; }
+.dash-kpi .kpi-value { font-size:30px; font-weight:700; color:#f8fafc; }
+.dash-kpi .kpi-sub { font-size:12px; margin-top:6px; display:flex; align-items:center; gap:4px; }
+.dash-kpi .kpi-sub.up { color:#34d399; }
+.dash-kpi .kpi-sub.down { color:#f87171; }
+
+.dash-charts-row { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+.dash-chart-card {
+  background: linear-gradient(135deg, rgba(30,41,59,.8), rgba(51,65,85,.5));
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px; padding:20px; backdrop-filter:blur(8px);
+}
+.dash-chart-card .chart-title { font-size:14px; font-weight:600; color:#e2e8f0; margin-bottom:16px; }
+.dash-chart-container { height:280px; }
+
+.dash-bottom-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.dash-table-card {
+  background: linear-gradient(135deg, rgba(30,41,59,.8), rgba(51,65,85,.5));
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px; padding:20px; backdrop-filter:blur(8px);
+}
+.dash-table-card .chart-title { font-size:14px; font-weight:600; color:#e2e8f0; margin-bottom:12px; }
+.dash-mini-table { width:100%; }
+.dash-mini-table th {
+  text-align:left; font-size:11.5px; color:#94a3b8;
+  font-weight:600; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.06);
+}
+.dash-mini-table td { font-size:12.5px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.03); color:#cbd5e1; }
+.dash-mini-table .rank { color:#818cf8; font-weight:700; width:30px; }
+.dash-mini-table .val { text-align:right; color:#f1f5f9; font-weight:600; }
+
+/* ============ LOADING/TYPING ============ */
+.typing-indicator {
+  display:inline-flex; gap:4px; padding:4px 0;
+}
+.typing-indicator span {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--primary); opacity:.4;
+  animation:typing 1.4s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay:.2s; }
+.typing-indicator span:nth-child(3) { animation-delay:.4s; }
+@keyframes typing {
+  0%,60%,100% { opacity:.4; transform:translateY(0); }
+  30% { opacity:1; transform:translateY(-4px); }
+}
+
+.generating-overlay {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; height:400px; gap:20px;
+}
+.gen-spinner {
+  width:48px; height:48px; border:3px solid var(--border);
+  border-top-color:var(--primary); border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.gen-text { font-size:14px; color:var(--text-secondary); }
+
+/* ============ MODAL ============ */
+.modal-backdrop {
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;
+}
+.modal-backdrop.active { display:flex; }
+.modal {
+  background:var(--surface); border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-xl); width:580px; max-height:80vh;
+  overflow:hidden; animation:modalIn .3s ease;
+}
+@keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(.98); } }
+.modal-header {
+  padding:24px 28px 16px; display:flex; align-items:center; justify-content:space-between;
+}
+.modal-header h3 { font-size:18px; font-weight:700; }
+.modal-close {
+  width:32px; height:32px; border-radius:8px; border:none;
+  background:var(--bg); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:all .2s;
+  color:var(--text-secondary);
+}
+.modal-close:hover { background:var(--border); }
+.modal-body { padding:0 28px 28px; overflow-y:auto; }
+
+/* ============ ANIMATIONS ============ */
+.fade-in { animation:fadeIn .4s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } }
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:1200px) {
+  .quick-actions { grid-template-columns:repeat(2,1fr); }
+  .recent-grid { grid-template-columns:repeat(2,1fr); }
+  .tpl-grid { grid-template-columns:repeat(3,1fr); }
+}
+
+/* Mini chart in editor canvas preview */
+.mini-chart { width:100%; height:200px; }
+.editor-report-title { font-size:20px; font-weight:700; margin-bottom:4px; }
+.editor-report-sub { font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
+.editor-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.editor-kpi {
+  background:var(--bg); border-radius:10px; padding:16px; text-align:center;
+}
+.editor-kpi .ek-label { font-size:12px; color:var(--text-secondary); }
+.editor-kpi .ek-value { font-size:22px; font-weight:700; margin-top:4px; }
+.editor-charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.editor-chart-box {
+  border:1px solid var(--border); border-radius:10px; padding:14px;
+}
+.editor-chart-box .ecb-title { font-size:13px; font-weight:600; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- ========== SIDEBAR ========== -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">Ai</div>
+      <div>
+        <div class="logo-text">AiReport</div>
+        <div class="logo-sub">AI 智能报表平台</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">主要功能</div>
+        <div class="nav-item active" data-view="home" onclick="switchView('home')">
+          <span class="material-icons-outlined">home</span> 工作台
+        </div>
+        <div class="nav-item" data-view="ai" onclick="switchView('ai')">
+          <span class="material-icons-outlined">auto_awesome</span> AI 创建
+          <span class="badge">NEW</span>
+        </div>
+        <div class="nav-item" data-view="templates" onclick="switchView('templates')">
+          <span class="material-icons-outlined">dashboard_customize</span> 模版中心
+        </div>
+        <div class="nav-item" data-view="editor" onclick="switchView('editor')">
+          <span class="material-icons-outlined">edit_note</span> 报表编辑
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">数据管理</div>
+        <div class="nav-item" data-view="datasource" onclick="switchView('datasource')">
+          <span class="material-icons-outlined">storage</span> 数据源
+        </div>
+        <div class="nav-item" onclick="openDashboard()">
+          <span class="material-icons-outlined">monitor</span> 大屏预览
+        </div>
+        <div class="nav-item">
+          <span class="material-icons-outlined">dataset</span> 数据集
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">系统</div>
+        <div class="nav-item">
+          <span class="material-icons-outlined">share</span> 分享管理
+        </div>
+        <div class="nav-item">
+          <span class="material-icons-outlined">settings</span> 系统设置
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="avatar">张</div>
+      <div class="user-info">
+        <div class="user-name">张工程师</div>
+        <div class="user-role">管理员</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN AREA ========== -->
+  <div id="main">
+    <!-- ========== TOPBAR ========== -->
+    <header id="topbar">
+      <div class="topbar-title" id="topbar-title">工作台</div>
+      <div class="topbar-search">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" placeholder="搜索报表、模版、数据源...">
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn"><span class="material-icons-outlined">notifications</span></button>
+        <button class="topbar-btn"><span class="material-icons-outlined">help_outline</span></button>
+      </div>
+    </header>
+
+    <!-- ========== HOME VIEW ========== -->
+    <div id="view-home" class="view active">
+      <div class="hero-banner fade-in">
+        <h1>用 AI 重新定义报表体验</h1>
+        <p>只需描述你的需求，AI 自动完成数据接入、报表设计与大屏搭建。从想法到交付，只需几分钟。</p>
+        <div class="hero-actions">
+          <button class="btn btn-white" onclick="switchView('ai')">
+            <span class="material-icons-outlined">auto_awesome</span> AI 智能创建
+          </button>
+          <button class="btn btn-outline-white" onclick="switchView('templates')">
+            <span class="material-icons-outlined">dashboard_customize</span> 浏览模版
+          </button>
+        </div>
+      </div>
+
+      <div class="quick-actions fade-in">
+        <div class="quick-card" onclick="switchView('ai')">
+          <div class="card-icon ai"><span class="material-icons-outlined">auto_awesome</span></div>
+          <h3>AI 生成报表</h3>
+          <p>用自然语言描述需求，AI 自动设计并生成完整报表</p>
+          <span class="material-icons-outlined arrow">arrow_forward</span>
+        </div>
+        <div class="quick-card" onclick="switchView('templates')">
+          <div class="card-icon tpl"><span class="material-icons-outlined">dashboard_customize</span></div>
+          <h3>选择模版</h3>
+          <p>100+ 行业模版，一键套用，快速适配你的数据</p>
+          <span class="material-icons-outlined arrow">arrow_forward</span>
+        </div>
+        <div class="quick-card" onclick="switchView('editor')">
+          <div class="card-icon report"><span class="material-icons-outlined">article</span></div>
+          <h3>空白报表</h3>
+          <p>从零开始，自由拖拽组件搭建自定义报表</p>
+          <span class="material-icons-outlined arrow">arrow_forward</span>
+        </div>
+        <div class="quick-card" onclick="openDashboard()">
+          <div class="card-icon screen"><span class="material-icons-outlined">monitor</span></div>
+          <h3>空白大屏</h3>
+          <p>全屏数据可视化大屏，支持实时数据刷新</p>
+          <span class="material-icons-outlined arrow">arrow_forward</span>
+        </div>
+      </div>
+
+      <div class="stats-row fade-in">
+        <div class="stat-card">
+          <div class="stat-label">总报表数</div>
+          <div class="stat-value">128</div>
+          <div class="stat-change up"><span class="material-icons-outlined" style="font-size:14px">trending_up</span> +12 本月</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">数据大屏</div>
+          <div class="stat-value">24</div>
+          <div class="stat-change up"><span class="material-icons-outlined" style="font-size:14px">trending_up</span> +3 本月</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">数据源</div>
+          <div class="stat-value">16</div>
+          <div class="stat-change up"><span class="material-icons-outlined" style="font-size:14px">check_circle</span> 全部在线</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">AI 生成次数</div>
+          <div class="stat-value">586</div>
+          <div class="stat-change up"><span class="material-icons-outlined" style="font-size:14px">trending_up</span> +89 本月</div>
+        </div>
+      </div>
+
+      <div class="section-header fade-in">
+        <h2>最近项目</h2>
+        <a>查看全部 &rarr;</a>
+      </div>
+      <div class="recent-grid fade-in">
+        <div class="recent-card">
+          <div class="card-thumb">
+            <div class="thumb-placeholder t1"><span class="material-icons-outlined">bar_chart</span></div>
+            <span class="card-type-badge badge-report">报表</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">2026年Q1销售汇总报表</div>
+            <div class="card-meta"><span>修改于 2小时前</span><span>张工程师</span></div>
+          </div>
+        </div>
+        <div class="recent-card">
+          <div class="card-thumb">
+            <div class="thumb-placeholder t6"><span class="material-icons-outlined">monitor</span></div>
+            <span class="card-type-badge badge-dashboard">大屏</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">电商实时运营数据大屏</div>
+            <div class="card-meta"><span>修改于 5小时前</span><span>AI 生成</span></div>
+          </div>
+        </div>
+        <div class="recent-card">
+          <div class="card-thumb">
+            <div class="thumb-placeholder t2"><span class="material-icons-outlined">pie_chart</span></div>
+            <span class="card-type-badge badge-report">报表</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">财务月度分析报告</div>
+            <div class="card-meta"><span>修改于 昨天</span><span>李财务</span></div>
+          </div>
+        </div>
+        <div class="recent-card">
+          <div class="card-thumb">
+            <div class="thumb-placeholder t4"><span class="material-icons-outlined">people</span></div>
+            <span class="card-type-badge badge-report">报表</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">人力资源看板</div>
+            <div class="card-meta"><span>修改于 3天前</span><span>王HR</span></div>
+          </div>
+        </div>
+        <div class="recent-card">
+          <div class="card-thumb">
+            <div class="thumb-placeholder t5"><span class="material-icons-outlined">inventory_2</span></div>
+            <span class="card-type-badge badge-dashboard">大屏</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">供应链监控大屏</div>
+            <div class="card-meta"><span>修改于 3天前</span><span>AI 生成</span></div>
+          </div>
+        </div>
+        <div class="recent-card">
+          <div class="card-thumb">
+            <div class="thumb-placeholder t3"><span class="material-icons-outlined">campaign</span></div>
+            <span class="card-type-badge badge-report">报表</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">营销活动ROI分析</div>
+            <div class="card-meta"><span>修改于 1周前</span><span>赵运营</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== AI CREATE VIEW ========== -->
+    <div id="view-ai" class="ai-view">
+      <div class="ai-left">
+        <div class="ai-header">
+          <h2>AI 智能创建</h2>
+          <p>描述你的需求，AI 帮你自动设计和生成</p>
+        </div>
+        <div class="ai-suggestions">
+          <div class="suggestion-chip" onclick="fillSuggestion('帮我生成一个电商销售数据大屏，包含GMV趋势、品类占比、TOP10商品、实时订单数据')">电商销售大屏</div>
+          <div class="suggestion-chip" onclick="fillSuggestion('生成一份财务月度分析报表，包含收入支出对比、利润趋势、费用结构饼图、关键财务指标')">财务月报</div>
+          <div class="suggestion-chip" onclick="fillSuggestion('创建人力资源统计看板，显示人员结构、招聘进度、离职率趋势、部门人数分布')">HR 看板</div>
+          <div class="suggestion-chip" onclick="fillSuggestion('制作供应链监控大屏，展示库存周转、物流追踪地图、供应商交付率、订单履约率')">供应链大屏</div>
+          <div class="suggestion-chip" onclick="fillSuggestion('生成营销活动ROI报表，包含渠道转化漏斗、广告投放效果对比、用户获取成本趋势')">营销ROI</div>
+        </div>
+        <div class="ai-chat" id="ai-chat">
+          <div class="chat-msg ai-msg">
+            <div class="msg-avatar ai"><span class="material-icons-outlined" style="font-size:18px">auto_awesome</span></div>
+            <div class="msg-body">
+              你好！我是 AiReport 智能助手。告诉我你想要什么样的报表或大屏，我会帮你：<br><br>
+              <div class="outline-item"><span class="material-icons-outlined">check_circle</span> 自动识别并接入数据源</div>
+              <div class="outline-item"><span class="material-icons-outlined">check_circle</span> 智能选择最佳图表类型</div>
+              <div class="outline-item"><span class="material-icons-outlined">check_circle</span> 生成完整的报表或大屏布局</div>
+              <div class="outline-item"><span class="material-icons-outlined">check_circle</span> 支持后续交互式微调</div>
+            </div>
+          </div>
+        </div>
+        <div class="ai-input-area">
+          <div class="ai-input-wrap">
+            <textarea id="ai-input" placeholder="描述你想要的报表或大屏..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage()}"></textarea>
+            <button class="ai-send-btn" onclick="sendAiMessage()">
+              <span class="material-icons-outlined">send</span>
+            </button>
+          </div>
+          <div class="ai-options">
+            <button class="ai-opt-btn" onclick="document.getElementById('ai-input').value='生成报表'">
+              <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle">article</span> 报表模式
+            </button>
+            <button class="ai-opt-btn" onclick="document.getElementById('ai-input').value='生成大屏'">
+              <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle">monitor</span> 大屏模式
+            </button>
+            <button class="ai-opt-btn">
+              <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle">upload_file</span> 上传数据
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="ai-right">
+        <div class="ai-preview-bar">
+          <div class="preview-title">实时预览</div>
+          <div class="preview-actions">
+            <button class="btn btn-ghost" style="font-size:12px">
+              <span class="material-icons-outlined" style="font-size:16px">devices</span> 响应式
+            </button>
+            <button class="btn btn-ghost" style="font-size:12px">
+              <span class="material-icons-outlined" style="font-size:16px">fullscreen</span> 全屏
+            </button>
+            <button class="btn btn-primary" style="font-size:12px" onclick="switchView('editor')">
+              <span class="material-icons-outlined" style="font-size:16px">edit</span> 进入编辑
+            </button>
+          </div>
+        </div>
+        <div class="ai-preview-content" id="ai-preview-content">
+          <div class="generating-overlay" id="ai-placeholder">
+            <div style="font-size:64px;opacity:.2">
+              <span class="material-icons-outlined" style="font-size:inherit">auto_awesome</span>
+            </div>
+            <div class="gen-text">在左侧输入需求，AI 将在这里实时生成预览</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TEMPLATES VIEW ========== -->
+    <div id="view-templates" class="view">
+      <div class="tpl-header fade-in">
+        <h1>模版中心</h1>
+        <p>100+ 精选行业模版，一键套用，快速适配你的数据</p>
+      </div>
+      <div class="tpl-filters fade-in">
+        <button class="tpl-filter active">全部</button>
+        <button class="tpl-filter">报表</button>
+        <button class="tpl-filter">大屏</button>
+        <button class="tpl-filter">财务</button>
+        <button class="tpl-filter">销售</button>
+        <button class="tpl-filter">电商</button>
+        <button class="tpl-filter">营销</button>
+        <button class="tpl-filter">人力资源</button>
+        <button class="tpl-filter">供应链</button>
+        <button class="tpl-filter">制造业</button>
+      </div>
+      <div class="tpl-grid fade-in">
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t1" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">bar_chart</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">报表</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">销售月度汇总报表</div>
+            <div class="tpl-desc">月度销售额、同环比、渠道分析</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t6" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">monitor</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">大屏</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">电商实时运营大屏</div>
+            <div class="tpl-desc">GMV、订单、流量、转化实时监控</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t2" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">account_balance</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">报表</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">财务分析看板</div>
+            <div class="tpl-desc">收支对比、利润趋势、费用结构</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t4" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">people</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">报表</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">HR 数据看板</div>
+            <div class="tpl-desc">人员结构、招聘、离职率分析</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t3" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">campaign</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">报表</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">营销活动报表</div>
+            <div class="tpl-desc">渠道ROI、转化漏斗、投放效果</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t5" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">local_shipping</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">大屏</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">供应链监控大屏</div>
+            <div class="tpl-desc">库存、物流、供应商绩效实时看板</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t3" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">precision_manufacturing</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">大屏</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">生产制造看板</div>
+            <div class="tpl-desc">产线状态、OEE、良品率监控</div>
+          </div>
+        </div>
+        <div class="tpl-card">
+          <div class="tpl-thumb">
+            <div class="thumb-placeholder t1" style="height:100%"><span class="material-icons-outlined" style="font-size:48px">school</span></div>
+            <div class="tpl-overlay"><button class="btn btn-white">使用此模版</button></div>
+            <span class="tpl-tag">报表</span>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-name">教育数据分析</div>
+            <div class="tpl-desc">学生成绩、出勤率、教学质量评估</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== EDITOR VIEW ========== -->
+    <div id="view-editor" class="editor-view">
+      <div class="editor-toolbar">
+        <button class="toolbar-btn"><span class="material-icons-outlined">arrow_back</span></button>
+        <span style="font-size:14px;font-weight:600;margin:0 8px">电商销售报表</span>
+        <div class="divider"></div>
+        <button class="toolbar-btn"><span class="material-icons-outlined">undo</span> 撤销</button>
+        <button class="toolbar-btn"><span class="material-icons-outlined">redo</span> 重做</button>
+        <div class="divider"></div>
+        <button class="toolbar-btn"><span class="material-icons-outlined">auto_awesome</span> AI 优化</button>
+        <button class="toolbar-btn"><span class="material-icons-outlined">palette</span> 主题</button>
+        <div style="flex:1"></div>
+        <button class="toolbar-btn"><span class="material-icons-outlined">visibility</span> 预览</button>
+        <button class="btn btn-primary" style="font-size:12px;padding:7px 16px">
+          <span class="material-icons-outlined" style="font-size:16px">publish</span> 发布
+        </button>
+      </div>
+      <div class="editor-body">
+        <div class="editor-panel-left">
+          <div class="panel-tabs">
+            <div class="panel-tab active">组件</div>
+            <div class="panel-tab">图层</div>
+            <div class="panel-tab">数据</div>
+          </div>
+          <div class="panel-content">
+            <div class="component-group">
+              <div class="component-group-title">图表</div>
+              <div class="component-grid">
+                <div class="component-item"><span class="material-icons-outlined">show_chart</span><span>折线图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">bar_chart</span><span>柱状图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">pie_chart</span><span>饼图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">scatter_plot</span><span>散点图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">radar</span><span>雷达图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">speed</span><span>仪表盘</span></div>
+                <div class="component-item"><span class="material-icons-outlined">map</span><span>地图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">waterfall_chart</span><span>瀑布图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">donut_large</span><span>环形图</span></div>
+              </div>
+            </div>
+            <div class="component-group">
+              <div class="component-group-title">数据</div>
+              <div class="component-grid">
+                <div class="component-item"><span class="material-icons-outlined">table_chart</span><span>表格</span></div>
+                <div class="component-item"><span class="material-icons-outlined">pin</span><span>指标卡</span></div>
+                <div class="component-item"><span class="material-icons-outlined">format_list_numbered</span><span>排行榜</span></div>
+                <div class="component-item"><span class="material-icons-outlined">linear_scale</span><span>进度条</span></div>
+                <div class="component-item"><span class="material-icons-outlined">data_usage</span><span>占比图</span></div>
+                <div class="component-item"><span class="material-icons-outlined">numbers</span><span>翻牌器</span></div>
+              </div>
+            </div>
+            <div class="component-group">
+              <div class="component-group-title">控件</div>
+              <div class="component-grid">
+                <div class="component-item"><span class="material-icons-outlined">filter_alt</span><span>筛选器</span></div>
+                <div class="component-item"><span class="material-icons-outlined">date_range</span><span>日期</span></div>
+                <div class="component-item"><span class="material-icons-outlined">arrow_drop_down_circle</span><span>下拉框</span></div>
+                <div class="component-item"><span class="material-icons-outlined">tab</span><span>标签页</span></div>
+                <div class="component-item"><span class="material-icons-outlined">title</span><span>文本</span></div>
+                <div class="component-item"><span class="material-icons-outlined">image</span><span>图片</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="editor-canvas">
+          <div class="canvas-paper">
+            <div class="canvas-widget" style="margin-bottom:16px">
+              <div class="widget-label">标题</div>
+              <div class="editor-report-title">电商销售数据月度报表</div>
+              <div class="editor-report-sub">数据周期：2026年3月 &nbsp;|&nbsp; 数据来源：MySQL 业务库 &nbsp;|&nbsp; 自动更新</div>
+            </div>
+            <div class="canvas-widget" style="margin-bottom:16px">
+              <div class="widget-label">KPI 指标卡</div>
+              <div class="editor-kpi-row">
+                <div class="editor-kpi">
+                  <div class="ek-label">GMV（万元）</div>
+                  <div class="ek-value" style="color:#6366f1">5,680</div>
+                </div>
+                <div class="editor-kpi">
+                  <div class="ek-label">订单量</div>
+                  <div class="ek-value" style="color:#10b981">128,456</div>
+                </div>
+                <div class="editor-kpi">
+                  <div class="ek-label">客单价（元）</div>
+                  <div class="ek-value" style="color:#f59e0b">442</div>
+                </div>
+                <div class="editor-kpi">
+                  <div class="ek-label">转化率</div>
+                  <div class="ek-value" style="color:#ef4444">3.8%</div>
+                </div>
+              </div>
+            </div>
+            <div class="canvas-widget">
+              <div class="widget-label">图表区</div>
+              <div class="editor-charts-row">
+                <div class="editor-chart-box">
+                  <div class="ecb-title">GMV 月度趋势</div>
+                  <div id="editor-chart-1" class="mini-chart"></div>
+                </div>
+                <div class="editor-chart-box">
+                  <div class="ecb-title">品类占比分布</div>
+                  <div id="editor-chart-2" class="mini-chart"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="editor-panel-right">
+          <div class="panel-tabs">
+            <div class="panel-tab active">属性</div>
+            <div class="panel-tab">样式</div>
+            <div class="panel-tab">交互</div>
+          </div>
+          <div style="flex:1;overflow-y:auto">
+            <div class="prop-section">
+              <div class="prop-section-title">基本属性</div>
+              <div class="prop-row"><span class="prop-label">标题</span><input class="prop-input" value="GMV 月度趋势"></div>
+              <div class="prop-row"><span class="prop-label">类型</span><select class="prop-select"><option>折线图</option><option>柱状图</option><option>面积图</option></select></div>
+              <div class="prop-row"><span class="prop-label">主题</span><select class="prop-select"><option>默认</option><option>暗色</option><option>清新</option></select></div>
+            </div>
+            <div class="prop-section">
+              <div class="prop-section-title">数据绑定</div>
+              <div class="prop-row"><span class="prop-label">数据源</span><select class="prop-select"><option>MySQL - 业务库</option><option>API 接口</option></select></div>
+              <div class="prop-row"><span class="prop-label">X 轴</span><select class="prop-select"><option>month (月份)</option></select></div>
+              <div class="prop-row"><span class="prop-label">Y 轴</span><select class="prop-select"><option>gmv (GMV)</option></select></div>
+              <div style="margin-top:8px">
+                <button class="btn btn-ghost" style="font-size:12px;width:100%;justify-content:center;border:1px dashed var(--border)">
+                  <span class="material-icons-outlined" style="font-size:16px">auto_awesome</span> AI 智能推荐字段
+                </button>
+              </div>
+            </div>
+            <div class="prop-section">
+              <div class="prop-section-title">外观设置</div>
+              <div class="prop-row"><span class="prop-label">宽度</span><input class="prop-input" value="100%"></div>
+              <div class="prop-row"><span class="prop-label">高度</span><input class="prop-input" value="200px"></div>
+              <div class="prop-row"><span class="prop-label">线条色</span><input type="color" class="prop-color" value="#6366f1"></div>
+              <div class="prop-row"><span class="prop-label">圆角</span><input class="prop-input" value="10px"></div>
+            </div>
+            <div class="prop-section">
+              <div class="prop-section-title">刷新策略</div>
+              <div class="prop-row"><span class="prop-label">自动刷新</span><select class="prop-select"><option>每5分钟</option><option>每1分钟</option><option>实时</option><option>手动</option></select></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== DATA SOURCE VIEW ========== -->
+    <div id="view-datasource" class="view">
+      <div class="section-header" style="margin-bottom:24px">
+        <div>
+          <h2 style="font-size:20px;margin-bottom:4px">数据源管理</h2>
+          <p style="font-size:13px;color:var(--text-secondary)">管理并配置所有数据源连接，支持自动检测和智能接入</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('ds-modal').classList.add('active')">
+          <span class="material-icons-outlined" style="font-size:18px">add</span> 添加数据源
+        </button>
+      </div>
+      <div class="ds-grid fade-in">
+        <div class="ds-sidebar-card">
+          <div class="ds-add-btn" onclick="document.getElementById('ds-modal').classList.add('active')">
+            <span class="material-icons-outlined">add_circle</span> 新建连接
+          </div>
+          <div class="ds-list">
+            <div class="ds-item active">
+              <div class="ds-icon" style="background:#e0f2fe;color:#0284c7;font-size:10px">MySQL</div>
+              <div class="ds-info"><div class="ds-name">业务主库</div><div class="ds-type">MySQL 8.0</div></div>
+              <div class="ds-status online"></div>
+            </div>
+            <div class="ds-item">
+              <div class="ds-icon" style="background:#dbeafe;color:#2563eb;font-size:10px">PgSQL</div>
+              <div class="ds-info"><div class="ds-name">数据仓库</div><div class="ds-type">PostgreSQL 15</div></div>
+              <div class="ds-status online"></div>
+            </div>
+            <div class="ds-item">
+              <div class="ds-icon" style="background:#fce7f3;color:#db2777;font-size:10px">API</div>
+              <div class="ds-info"><div class="ds-name">ERP 接口</div><div class="ds-type">REST API</div></div>
+              <div class="ds-status online"></div>
+            </div>
+            <div class="ds-item">
+              <div class="ds-icon" style="background:#d1fae5;color:#059669;font-size:10px">Excel</div>
+              <div class="ds-info"><div class="ds-name">月度报表数据</div><div class="ds-type">Excel / CSV</div></div>
+              <div class="ds-status online"></div>
+            </div>
+            <div class="ds-item">
+              <div class="ds-icon" style="background:#fef3c7;color:#d97706;font-size:10px">ES</div>
+              <div class="ds-info"><div class="ds-name">日志检索</div><div class="ds-type">Elasticsearch</div></div>
+              <div class="ds-status online"></div>
+            </div>
+            <div class="ds-item">
+              <div class="ds-icon" style="background:#ede9fe;color:#7c3aed;font-size:10px">Redis</div>
+              <div class="ds-info"><div class="ds-name">实时缓存</div><div class="ds-type">Redis 7</div></div>
+              <div class="ds-status offline"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-detail">
+          <div class="ds-detail-header">
+            <h3>业务主库 - MySQL 8.0</h3>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="font-size:12px"><span class="material-icons-outlined" style="font-size:16px">sync</span> 测试连接</button>
+              <button class="btn btn-primary" style="font-size:12px"><span class="material-icons-outlined" style="font-size:16px">save</span> 保存</button>
+            </div>
+          </div>
+          <div class="ds-detail-body">
+            <div class="ds-form-grid">
+              <div class="ds-form-group"><label>连接名称</label><input value="业务主库"></div>
+              <div class="ds-form-group"><label>数据库类型</label><select><option>MySQL</option><option>PostgreSQL</option><option>SQL Server</option><option>Oracle</option><option>ClickHouse</option></select></div>
+              <div class="ds-form-group"><label>主机地址</label><input value="db-master.company.com"></div>
+              <div class="ds-form-group"><label>端口</label><input value="3306"></div>
+              <div class="ds-form-group"><label>用户名</label><input value="report_readonly"></div>
+              <div class="ds-form-group"><label>密码</label><input type="password" value="••••••••"></div>
+              <div class="ds-form-group full"><label>数据库名</label><input value="ecommerce_prod"></div>
+            </div>
+            <div class="ds-tables">
+              <div class="section-header" style="margin-top:24px;margin-bottom:8px">
+                <h2 style="font-size:15px">已检测到的数据表 (18张)</h2>
+                <span style="font-size:12px;color:var(--success);display:flex;align-items:center;gap:4px">
+                  <span class="material-icons-outlined" style="font-size:14px">check_circle</span> AI 已自动识别表结构
+                </span>
+              </div>
+              <div class="ds-table-list">
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> orders 订单表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> products 商品表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> users 用户表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> categories 品类表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> payments 支付表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> logistics 物流表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> inventory 库存表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> promotions 活动表</div>
+                <div class="ds-table-item"><span class="material-icons-outlined">table_view</span> reviews 评价表</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DASHBOARD OVERLAY ========== -->
+<div id="view-dashboard" class="dashboard-overlay">
+  <div class="dash-header">
+    <span class="material-icons-outlined" style="font-size:22px;color:#818cf8;margin-right:12px">monitor</span>
+    <div class="dash-title">电商实时运营数据大屏</div>
+    <div class="dash-time" id="dash-time"></div>
+    <button class="dash-close" onclick="closeDashboard()">
+      <span class="material-icons-outlined">close</span>
+    </button>
+  </div>
+  <div class="dash-body">
+    <div class="dash-kpi-row">
+      <div class="dash-kpi">
+        <div class="kpi-label">今日 GMV（万元）</div>
+        <div class="kpi-value" id="kpi-gmv">568.2</div>
+        <div class="kpi-sub up"><span class="material-icons-outlined" style="font-size:14px">trending_up</span> 较昨日 +12.8%</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="kpi-label">实时订单量</div>
+        <div class="kpi-value" id="kpi-orders">12,846</div>
+        <div class="kpi-sub up"><span class="material-icons-outlined" style="font-size:14px">trending_up</span> 较昨日 +8.3%</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="kpi-label">客单价（元）</div>
+        <div class="kpi-value">442</div>
+        <div class="kpi-sub up"><span class="material-icons-outlined" style="font-size:14px">trending_up</span> 较昨日 +2.1%</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="kpi-label">支付转化率</div>
+        <div class="kpi-value">3.82%</div>
+        <div class="kpi-sub down"><span class="material-icons-outlined" style="font-size:14px">trending_down</span> 较昨日 -0.3%</div>
+      </div>
+    </div>
+    <div class="dash-charts-row">
+      <div class="dash-chart-card">
+        <div class="chart-title">GMV 趋势（近12个月）</div>
+        <div class="dash-chart-container" id="dash-chart-line"></div>
+      </div>
+      <div class="dash-chart-card">
+        <div class="chart-title">品类占比分布</div>
+        <div class="dash-chart-container" id="dash-chart-pie"></div>
+      </div>
+    </div>
+    <div class="dash-bottom-row">
+      <div class="dash-chart-card">
+        <div class="chart-title">各渠道销售额对比</div>
+        <div class="dash-chart-container" id="dash-chart-bar"></div>
+      </div>
+      <div class="dash-table-card">
+        <div class="chart-title">TOP 10 热销商品</div>
+        <table class="dash-mini-table">
+          <thead><tr><th>排名</th><th>商品名称</th><th class="val">销售额</th></tr></thead>
+          <tbody>
+            <tr><td class="rank">1</td><td>智能降噪耳机 Pro</td><td class="val">¥86.2万</td></tr>
+            <tr><td class="rank">2</td><td>轻薄羽绒服2026款</td><td class="val">¥72.5万</td></tr>
+            <tr><td class="rank">3</td><td>有机坚果礼盒装</td><td class="val">¥65.8万</td></tr>
+            <tr><td class="rank">4</td><td>AI 学习平板 X1</td><td class="val">¥58.3万</td></tr>
+            <tr><td class="rank">5</td><td>运动跑鞋飞羽系列</td><td class="val">¥52.1万</td></tr>
+            <tr><td class="rank">6</td><td>智能扫地机器人</td><td class="val">¥48.6万</td></tr>
+            <tr><td class="rank">7</td><td>精酿咖啡豆礼盒</td><td class="val">¥42.3万</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dash-chart-card">
+        <div class="chart-title">24小时订单量分布</div>
+        <div class="dash-chart-container" id="dash-chart-bar2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ADD DATASOURCE MODAL ========== -->
+<div class="modal-backdrop" id="ds-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>添加数据源</h3>
+      <button class="modal-close" onclick="document.getElementById('ds-modal').classList.remove('active')">
+        <span class="material-icons-outlined" style="font-size:18px">close</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);margin-bottom:20px;font-size:13.5px">选择数据源类型，AI 将自动检测表结构并建立连接</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#e0f2fe;color:#0284c7;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">storage</span></div>
+          <div style="font-size:13px;font-weight:600">MySQL</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#dbeafe;color:#2563eb;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">storage</span></div>
+          <div style="font-size:13px;font-weight:600">PostgreSQL</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#fee2e2;color:#dc2626;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">storage</span></div>
+          <div style="font-size:13px;font-weight:600">SQL Server</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#fef3c7;color:#d97706;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">storage</span></div>
+          <div style="font-size:13px;font-weight:600">Oracle</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#fce7f3;color:#db2777;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">api</span></div>
+          <div style="font-size:13px;font-weight:600">REST API</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#d1fae5;color:#059669;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">description</span></div>
+          <div style="font-size:13px;font-weight:600">Excel / CSV</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#ede9fe;color:#7c3aed;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">speed</span></div>
+          <div style="font-size:13px;font-weight:600">ClickHouse</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#e0f2fe;color:#0ea5e9;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">search</span></div>
+          <div style="font-size:13px;font-weight:600">Elasticsearch</div>
+        </div>
+        <div class="quick-card" style="padding:20px;text-align:center">
+          <div class="card-icon" style="background:#f1f5f9;color:#64748b;margin:0 auto 10px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center"><span class="material-icons-outlined">more_horiz</span></div>
+          <div style="font-size:13px;font-weight:600">更多...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ VIEW SWITCHING ============ */
+const viewTitles = {
+  home:'工作台', ai:'AI 智能创建', templates:'模版中心',
+  editor:'报表编辑', datasource:'数据源管理'
+};
+
+function switchView(name) {
+  document.querySelectorAll('.view, .ai-view, .editor-view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.view === name);
+  });
+  document.getElementById('topbar-title').textContent = viewTitles[name] || '';
+  if (name === 'editor') initEditorCharts();
+}
+
+/* ============ DASHBOARD ============ */
+function openDashboard() {
+  document.getElementById('view-dashboard').classList.add('active');
+  updateDashTime();
+  setTimeout(initDashCharts, 100);
+}
+function closeDashboard() {
+  document.getElementById('view-dashboard').classList.remove('active');
+}
+function updateDashTime() {
+  const now = new Date();
+  const str = now.getFullYear() + '年' +
+    (now.getMonth()+1).toString().padStart(2,'0') + '月' +
+    now.getDate().toString().padStart(2,'0') + '日 ' +
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0') + ':' +
+    now.getSeconds().toString().padStart(2,'0');
+  const el = document.getElementById('dash-time');
+  if (el) el.textContent = str;
+  if (document.getElementById('view-dashboard').classList.contains('active')) {
+    requestAnimationFrame(() => setTimeout(updateDashTime, 1000));
+  }
+}
+
+/* ============ DASHBOARD CHARTS ============ */
+function initDashCharts() {
+  const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+  const gmvData = [2850,3200,2980,3650,4120,3890,4250,4680,4350,4920,5100,5680];
+
+  // Line chart
+  const lineEl = document.getElementById('dash-chart-line');
+  if (lineEl && lineEl.offsetWidth > 0) {
+    const lineChart = echarts.init(lineEl);
+    lineChart.setOption({
+      grid:{left:50,right:20,top:20,bottom:30},
+      xAxis:{type:'category',data:months,axisLine:{lineStyle:{color:'#334155'}},axisLabel:{color:'#94a3b8',fontSize:11}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(255,255,255,.06)'}},axisLabel:{color:'#94a3b8',fontSize:11}},
+      tooltip:{trigger:'axis',backgroundColor:'#1e293b',borderColor:'#334155',textStyle:{color:'#e2e8f0',fontSize:12}},
+      series:[{
+        type:'line',data:gmvData,smooth:true,
+        lineStyle:{color:'#818cf8',width:3},
+        areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(129,140,248,.3)'},{offset:1,color:'rgba(129,140,248,.02)'}]}},
+        itemStyle:{color:'#818cf8'},symbol:'circle',symbolSize:6
+      }],
+      animationDuration:1500,animationEasing:'cubicOut'
+    });
+  }
+
+  // Pie chart
+  const pieEl = document.getElementById('dash-chart-pie');
+  if (pieEl && pieEl.offsetWidth > 0) {
+    const pieChart = echarts.init(pieEl);
+    pieChart.setOption({
+      tooltip:{trigger:'item',backgroundColor:'#1e293b',borderColor:'#334155',textStyle:{color:'#e2e8f0',fontSize:12}},
+      series:[{
+        type:'pie',radius:['45%','72%'],center:['50%','50%'],
+        label:{color:'#94a3b8',fontSize:11,formatter:'{b}\n{d}%'},
+        labelLine:{lineStyle:{color:'#475569'}},
+        data:[
+          {value:28,name:'美妆',itemStyle:{color:'#818cf8'}},
+          {value:22,name:'服饰',itemStyle:{color:'#a78bfa'}},
+          {value:18,name:'食品',itemStyle:{color:'#34d399'}},
+          {value:15,name:'数码',itemStyle:{color:'#38bdf8'}},
+          {value:12,name:'家居',itemStyle:{color:'#fbbf24'}},
+          {value:5,name:'其他',itemStyle:{color:'#64748b'}}
+        ],
+        animationType:'scale',animationDuration:1200
+      }]
+    });
+  }
+
+  // Bar chart
+  const barEl = document.getElementById('dash-chart-bar');
+  if (barEl && barEl.offsetWidth > 0) {
+    const barChart = echarts.init(barEl);
+    barChart.setOption({
+      grid:{left:60,right:20,top:20,bottom:30},
+      xAxis:{type:'category',data:['天猫','京东','抖音','拼多多','小红书','自营'],axisLine:{lineStyle:{color:'#334155'}},axisLabel:{color:'#94a3b8',fontSize:11}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(255,255,255,.06)'}},axisLabel:{color:'#94a3b8',fontSize:11}},
+      tooltip:{trigger:'axis',backgroundColor:'#1e293b',borderColor:'#334155',textStyle:{color:'#e2e8f0',fontSize:12}},
+      series:[{
+        type:'bar',
+        data:[1820,1560,980,720,480,320],
+        itemStyle:{
+          color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'#818cf8'},{offset:1,color:'#6366f1'}]},
+          borderRadius:[4,4,0,0]
+        },
+        barWidth:'40%',animationDuration:1200
+      }]
+    });
+  }
+
+  // Bar2 chart (hourly)
+  const bar2El = document.getElementById('dash-chart-bar2');
+  if (bar2El && bar2El.offsetWidth > 0) {
+    const bar2Chart = echarts.init(bar2El);
+    const hours = Array.from({length:24},(_,i)=> i+'时');
+    const hourData = [120,80,45,30,25,40,180,450,680,820,750,690,880,920,860,780,950,1100,1250,1180,980,650,380,210];
+    bar2Chart.setOption({
+      grid:{left:50,right:10,top:20,bottom:30},
+      xAxis:{type:'category',data:hours,axisLine:{lineStyle:{color:'#334155'}},axisLabel:{color:'#94a3b8',fontSize:10,interval:3}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(255,255,255,.06)'}},axisLabel:{color:'#94a3b8',fontSize:10}},
+      tooltip:{trigger:'axis',backgroundColor:'#1e293b',borderColor:'#334155',textStyle:{color:'#e2e8f0',fontSize:12}},
+      series:[{
+        type:'bar',data:hourData,
+        itemStyle:{
+          color:function(p){return p.dataIndex<=new Date().getHours()?'#818cf8':'#334155'},
+          borderRadius:[2,2,0,0]
+        },
+        barWidth:'60%',animationDuration:1500
+      }]
+    });
+  }
+}
+
+/* ============ EDITOR CHARTS ============ */
+function initEditorCharts() {
+  const months = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+  const gmvData = [2850,3200,2980,3650,4120,3890,4250,4680,4350,4920,5100,5680];
+
+  const c1El = document.getElementById('editor-chart-1');
+  if (c1El && c1El.offsetWidth > 0) {
+    const c1 = echarts.init(c1El);
+    c1.setOption({
+      grid:{left:45,right:15,top:15,bottom:25},
+      xAxis:{type:'category',data:months,axisLabel:{fontSize:10,color:'#94a3b8'},axisLine:{lineStyle:{color:'#e2e8f0'}}},
+      yAxis:{type:'value',axisLabel:{fontSize:10,color:'#94a3b8'},splitLine:{lineStyle:{color:'#f1f5f9'}}},
+      tooltip:{trigger:'axis'},
+      series:[{type:'line',data:gmvData,smooth:true,lineStyle:{color:'#6366f1',width:2.5},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(99,102,241,.15)'},{offset:1,color:'rgba(99,102,241,.01)'}]}},itemStyle:{color:'#6366f1'},symbol:'circle',symbolSize:5}]
+    });
+  }
+
+  const c2El = document.getElementById('editor-chart-2');
+  if (c2El && c2El.offsetWidth > 0) {
+    const c2 = echarts.init(c2El);
+    c2.setOption({
+      tooltip:{trigger:'item'},
+      series:[{
+        type:'pie',radius:['40%','68%'],center:['50%','50%'],
+        label:{fontSize:11,formatter:'{b} {d}%'},
+        data:[
+          {value:28,name:'美妆',itemStyle:{color:'#6366f1'}},
+          {value:22,name:'服饰',itemStyle:{color:'#a78bfa'}},
+          {value:18,name:'食品',itemStyle:{color:'#10b981'}},
+          {value:15,name:'数码',itemStyle:{color:'#3b82f6'}},
+          {value:12,name:'家居',itemStyle:{color:'#f59e0b'}},
+          {value:5,name:'其他',itemStyle:{color:'#94a3b8'}}
+        ]
+      }]
+    });
+  }
+}
+
+/* ============ AI CHAT ============ */
+function fillSuggestion(text) {
+  document.getElementById('ai-input').value = text;
+  document.getElementById('ai-input').focus();
+}
+
+function sendAiMessage() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const chat = document.getElementById('ai-chat');
+
+  // User message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-msg user-msg';
+  userMsg.innerHTML = `
+    <div class="msg-avatar user"><span class="material-icons-outlined" style="font-size:18px">person</span></div>
+    <div class="msg-body">${escHtml(text)}</div>`;
+  chat.appendChild(userMsg);
+
+  // AI typing
+  const aiTyping = document.createElement('div');
+  aiTyping.className = 'chat-msg ai-msg';
+  aiTyping.innerHTML = `
+    <div class="msg-avatar ai"><span class="material-icons-outlined" style="font-size:18px">auto_awesome</span></div>
+    <div class="msg-body"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+  chat.appendChild(aiTyping);
+  chat.scrollTop = chat.scrollHeight;
+
+  // Show generating in preview
+  const preview = document.getElementById('ai-preview-content');
+  preview.innerHTML = '<div class="generating-overlay"><div class="gen-spinner"></div><div class="gen-text">AI 正在分析需求并生成报表...</div></div>';
+
+  // Simulate AI response
+  setTimeout(() => {
+    aiTyping.querySelector('.msg-body').innerHTML = `
+      好的，我已为您规划了报表结构，包含以下模块：<br><br>
+      <div class="outline-item"><span class="material-icons-outlined">dashboard</span> <b>KPI 指标区</b> — GMV、订单量、客单价、转化率</div>
+      <div class="outline-item"><span class="material-icons-outlined">show_chart</span> <b>GMV 趋势图</b> — 折线图展示近12个月走势</div>
+      <div class="outline-item"><span class="material-icons-outlined">pie_chart</span> <b>品类占比</b> — 饼图展示各品类销售占比</div>
+      <div class="outline-item"><span class="material-icons-outlined">bar_chart</span> <b>渠道对比</b> — 柱状图对比各渠道业绩</div>
+      <div class="outline-item"><span class="material-icons-outlined">format_list_numbered</span> <b>TOP10 商品</b> — 热销商品排行榜</div>
+      <br>
+      <span style="color:var(--success);font-size:12.5px">
+        <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle">check_circle</span>
+        已自动识别数据源：MySQL 业务主库 (ecommerce_prod)
+      </span><br>
+      <span style="color:var(--text-muted);font-size:12.5px;margin-top:4px;display:block">正在生成预览，稍等片刻...</span>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    // Generate preview
+    setTimeout(() => {
+      preview.innerHTML = `
+        <div class="preview-canvas" style="padding:28px">
+          <div style="font-size:20px;font-weight:700;margin-bottom:4px">电商销售数据报表</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">数据周期：2026年3月 | 数据来源：MySQL 业务库 | AI 自动生成</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+            <div style="background:var(--bg);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:12px;color:var(--text-secondary)">GMV（万元）</div>
+              <div style="font-size:24px;font-weight:700;color:#6366f1;margin-top:4px">5,680</div>
+              <div style="font-size:11px;color:var(--success);margin-top:2px">&#9650; +15.2%</div>
+            </div>
+            <div style="background:var(--bg);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:12px;color:var(--text-secondary)">订单量</div>
+              <div style="font-size:24px;font-weight:700;color:#10b981;margin-top:4px">128,456</div>
+              <div style="font-size:11px;color:var(--success);margin-top:2px">&#9650; +8.3%</div>
+            </div>
+            <div style="background:var(--bg);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:12px;color:var(--text-secondary)">客单价（元）</div>
+              <div style="font-size:24px;font-weight:700;color:#f59e0b;margin-top:4px">442</div>
+              <div style="font-size:11px;color:var(--success);margin-top:2px">&#9650; +2.1%</div>
+            </div>
+            <div style="background:var(--bg);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:12px;color:var(--text-secondary)">转化率</div>
+              <div style="font-size:24px;font-weight:700;color:#ef4444;margin-top:4px">3.82%</div>
+              <div style="font-size:11px;color:var(--error);margin-top:2px">&#9660; -0.3%</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px">GMV 月度趋势</div>
+              <div id="ai-preview-chart-1" style="height:200px"></div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px">品类占比分布</div>
+              <div id="ai-preview-chart-2" style="height:200px"></div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px">TOP 10 热销商品</div>
+            <table style="width:100%;font-size:12.5px;border-collapse:collapse">
+              <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px 0;color:var(--text-muted);font-weight:600">排名</th><th style="text-align:left;padding:8px 0;color:var(--text-muted);font-weight:600">商品名称</th><th style="text-align:right;padding:8px 0;color:var(--text-muted);font-weight:600">销售额</th><th style="text-align:right;padding:8px 0;color:var(--text-muted);font-weight:600">销量</th></tr></thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--border-light)"><td style="padding:8px 0;color:var(--primary);font-weight:700">1</td><td style="padding:8px 0">智能降噪耳机 Pro</td><td style="text-align:right;padding:8px 0;font-weight:600">¥86.2万</td><td style="text-align:right;padding:8px 0">5,420</td></tr>
+                <tr style="border-bottom:1px solid var(--border-light)"><td style="padding:8px 0;color:var(--primary);font-weight:700">2</td><td style="padding:8px 0">轻薄羽绒服2026款</td><td style="text-align:right;padding:8px 0;font-weight:600">¥72.5万</td><td style="text-align:right;padding:8px 0">3,860</td></tr>
+                <tr style="border-bottom:1px solid var(--border-light)"><td style="padding:8px 0;color:var(--primary);font-weight:700">3</td><td style="padding:8px 0">有机坚果礼盒装</td><td style="text-align:right;padding:8px 0;font-weight:600">¥65.8万</td><td style="text-align:right;padding:8px 0">12,300</td></tr>
+                <tr style="border-bottom:1px solid var(--border-light)"><td style="padding:8px 0;color:var(--primary);font-weight:700">4</td><td style="padding:8px 0">AI 学习平板 X1</td><td style="text-align:right;padding:8px 0;font-weight:600">¥58.3万</td><td style="text-align:right;padding:8px 0">2,150</td></tr>
+                <tr><td style="padding:8px 0;color:var(--primary);font-weight:700">5</td><td style="padding:8px 0">运动跑鞋飞羽系列</td><td style="text-align:right;padding:8px 0;font-weight:600">¥52.1万</td><td style="text-align:right;padding:8px 0">4,680</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+
+      // Init preview charts
+      setTimeout(() => {
+        const pc1 = document.getElementById('ai-preview-chart-1');
+        const pc2 = document.getElementById('ai-preview-chart-2');
+        if (pc1 && pc1.offsetWidth > 0) {
+          const c = echarts.init(pc1);
+          c.setOption({
+            grid:{left:40,right:10,top:10,bottom:25},
+            xAxis:{type:'category',data:['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'],axisLabel:{fontSize:10,color:'#94a3b8'},axisLine:{lineStyle:{color:'#e2e8f0'}}},
+            yAxis:{type:'value',axisLabel:{fontSize:10,color:'#94a3b8'},splitLine:{lineStyle:{color:'#f1f5f9'}}},
+            series:[{type:'line',data:[2850,3200,2980,3650,4120,3890,4250,4680,4350,4920,5100,5680],smooth:true,lineStyle:{color:'#6366f1',width:2},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(99,102,241,.12)'},{offset:1,color:'rgba(99,102,241,.01)'}]}},itemStyle:{color:'#6366f1'},symbol:'circle',symbolSize:4}]
+          });
+        }
+        if (pc2 && pc2.offsetWidth > 0) {
+          const c = echarts.init(pc2);
+          c.setOption({
+            series:[{type:'pie',radius:['38%','65%'],center:['50%','50%'],label:{fontSize:10,formatter:'{b} {d}%'},data:[{value:28,name:'美妆',itemStyle:{color:'#6366f1'}},{value:22,name:'服饰',itemStyle:{color:'#a78bfa'}},{value:18,name:'食品',itemStyle:{color:'#10b981'}},{value:15,name:'数码',itemStyle:{color:'#3b82f6'}},{value:12,name:'家居',itemStyle:{color:'#f59e0b'}},{value:5,name:'其他',itemStyle:{color:'#94a3b8'}}]}]
+          });
+        }
+      }, 100);
+
+      // Final AI message
+      const doneMsg = document.createElement('div');
+      doneMsg.className = 'chat-msg ai-msg';
+      doneMsg.innerHTML = `
+        <div class="msg-avatar ai"><span class="material-icons-outlined" style="font-size:18px">auto_awesome</span></div>
+        <div class="msg-body">
+          报表已生成完毕！右侧可以预览效果。你可以：<br><br>
+          <div class="outline-item"><span class="material-icons-outlined">edit</span> 点击「进入编辑」微调布局和样式</div>
+          <div class="outline-item"><span class="material-icons-outlined">refresh</span> 告诉我需要修改的地方，我会重新调整</div>
+          <div class="outline-item"><span class="material-icons-outlined">publish</span> 满意后可直接发布或导出</div>
+        </div>`;
+      chat.appendChild(doneMsg);
+      chat.scrollTop = chat.scrollHeight;
+    }, 2000);
+  }, 1500);
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ============ TEMPLATE FILTERS ============ */
+document.querySelectorAll('.tpl-filter').forEach(f => {
+  f.addEventListener('click', () => {
+    document.querySelectorAll('.tpl-filter').forEach(x => x.classList.remove('active'));
+    f.classList.add('active');
+  });
+});
+
+/* ============ PANEL TABS ============ */
+document.querySelectorAll('.panel-tabs').forEach(tabs => {
+  tabs.querySelectorAll('.panel-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+});
+
+/* ============ INIT ============ */
+window.addEventListener('resize', () => {
+  document.querySelectorAll('[_echarts_instance_]').forEach(el => {
+    echarts.getInstanceByDom(el)?.resize();
+  });
+});
+</script>
+</body>
+</html>

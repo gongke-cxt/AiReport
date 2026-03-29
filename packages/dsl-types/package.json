@@ -1,0 +1,22 @@
+{
+  "name": "@aireport/dsl-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DSL 的 TypeScript 类型（与 schema 同步维护）",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.3"
+  }
+}

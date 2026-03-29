@@ -1,0 +1,12 @@
+{
+  "name": "@aireport/dsl-schema",
+  "version": "0.1.0",
+  "private": true,
+  "description": "报表/大屏统一 DSL — JSON Schema",
+  "files": [
+    "schemas"
+  ],
+  "scripts": {
+    "validate": "node ./scripts/validate-sample.mjs"
+  }
+}

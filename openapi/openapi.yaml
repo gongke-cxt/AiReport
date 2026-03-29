@@ -1,0 +1,526 @@
+openapi: 3.1.0
+info:
+  title: AiReport API
+  version: 0.1.0
+  description: |
+    AI 报表平台 HTTP API 草案（与《开发方案》对齐）。
+    流式对话建议使用 SSE：`Accept: text/event-stream`。
+servers:
+  - url: https://api.example.com/api/v1
+    description: 生产
+  - url: http://localhost:3000/api/v1
+    description: 本地
+
+tags:
+  - name: ai
+    description: AI 会话与生成
+  - name: projects
+    description: 项目与 DSL 文档
+  - name: connections
+    description: 数据源连接与元数据
+  - name: query
+    description: 查询预览与运行时取数
+  - name: publish
+    description: 发布与只读访问
+
+paths:
+  /ai/sessions:
+    post:
+      tags: [ai]
+      summary: 创建 AI 会话
+      operationId: createAiSession
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                locale:
+                  type: string
+                  default: zh-CN
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiSession"
+
+  /ai/sessions/{sessionId}/messages:
+    post:
+      tags: [ai]
+      summary: 发送用户消息（可 SSE 流式返回）
+      operationId: postAiMessage
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: 用户自然语言描述
+                stream:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: 非流式时返回完整结果；流式时为 text/event-stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMessageResult"
+            text/event-stream:
+              schema:
+                type: string
+
+  /projects:
+    get:
+      tags: [projects]
+      summary: 项目列表
+      operationId: listProjects
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProjectSummary"
+                  total:
+                    type: integer
+    post:
+      tags: [projects]
+      summary: 创建项目
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{projectId}/document:
+    get:
+      tags: [projects]
+      summary: 获取 DSL 文档
+      operationId: getProjectDocument
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentEnvelope"
+    put:
+      tags: [projects]
+      summary: 保存 DSL 文档
+      operationId: putProjectDocument
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentEnvelope"
+      responses:
+        "200":
+          description: OK
+
+  /connections:
+    post:
+      tags: [connections]
+      summary: 创建数据源连接（异步探测）
+      operationId: createConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionCreate"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connectionId:
+                    type: string
+                    format: uuid
+                  probeJobId:
+                    type: string
+                    format: uuid
+
+  /connections/{connectionId}/metadata:
+    get:
+      tags: [connections]
+      summary: 获取已缓存的库表元数据
+      operationId: getConnectionMetadata
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataSnapshot"
+
+  /query/preview:
+    post:
+      tags: [query]
+      summary: 小样本试跑（限流）
+      operationId: queryPreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryPreviewRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResult"
+
+  /query/batch:
+    post:
+      tags: [query]
+      summary: 运行时批量取数（合并优化）
+      operationId: queryBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryBatchRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryBatchResult"
+
+  /publishments:
+    post:
+      tags: [publish]
+      summary: 发布当前文档版本
+      operationId: createPublishment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                comment:
+                  type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Publishment"
+
+  /render/{publishId}:
+    get:
+      tags: [publish]
+      summary: 只读渲染配置（鉴权或公开 token）
+      operationId: getRenderConfig
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentEnvelope"
+
+components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    AiSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    AiMessageResult:
+      type: object
+      properties:
+        outline:
+          type: string
+          description: 大纲或说明（Markdown）
+        document:
+          description: 完整 DSL，若已生成
+          oneOf:
+            - type: object
+            - type: "null"
+        clarifyingQuestions:
+          type: array
+          items:
+            type: string
+
+    ProjectSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [report, dashboard]
+
+    Project:
+      allOf:
+        - $ref: "#/components/schemas/ProjectSummary"
+        - type: object
+          properties:
+            description:
+              type: string
+
+    DocumentEnvelope:
+      type: object
+      required: [dslVersion, document]
+      properties:
+        dslVersion:
+          type: string
+          const: "1.0"
+        document:
+          description: 符合 report-dashboard-dsl.v1.json 的 JSON
+          type: object
+          additionalProperties: true
+        etag:
+          type: string
+          description: 乐观锁
+
+    ConnectionCreate:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [mysql, postgresql, sqlserver, oracle, clickhouse, elasticsearch, rest, excel, csv]
+        config:
+          type: object
+          additionalProperties: true
+          description: 连接参数（服务端加密存储）
+
+    MetadataSnapshot:
+      type: object
+      properties:
+        connectionId:
+          type: string
+          format: uuid
+        refreshedAt:
+          type: string
+          format: date-time
+        schemas:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              tables:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    columns:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          dataType:
+                            type: string
+                          comment:
+                            type: string
+
+    QueryPreviewRequest:
+      type: object
+      required: [connectionId, sql]
+      properties:
+        connectionId:
+          type: string
+          format: uuid
+        sql:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+        limit:
+          type: integer
+          default: 200
+          maximum: 1000
+
+    QueryResult:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        stats:
+          type: object
+          properties:
+            rowCount:
+              type: integer
+            elapsedMs:
+              type: integer
+
+    QueryBatchRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [id, datasetId]
+            properties:
+              id:
+                type: string
+                description: 组件 id
+              datasetId:
+                type: string
+              filters:
+                type: object
+                additionalProperties: true
+
+    QueryBatchResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [id]
+            properties:
+              id:
+                type: string
+              data:
+                $ref: "#/components/schemas/QueryResult"
+              error:
+                type: string
+
+    Publishment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        publicToken:
+          type: string
+          nullable: true

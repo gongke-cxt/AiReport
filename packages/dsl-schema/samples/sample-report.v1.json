@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "type": "report",
+  "name": "电商销售月度报表",
+  "description": "示例：KPI + 折线 + 饼图",
+  "theme": {
+    "id": "default-light",
+    "mode": "light"
+  },
+  "parameters": [
+    {
+      "id": "p_month",
+      "label": "月份",
+      "kind": "date",
+      "default": "2026-03-01"
+    }
+  ],
+  "pages": [
+    {
+      "id": "p1",
+      "title": "概览",
+      "layout": {
+        "engine": "flow",
+        "columns": 24
+      },
+      "widgets": [
+        {
+          "id": "kpi_gmv",
+          "kind": "kpi",
+          "title": "GMV（万元）",
+          "binding": {
+            "datasetId": "ds_kpi",
+            "value": "gmv"
+          },
+          "refresh": { "mode": "interval", "seconds": 300 }
+        },
+        {
+          "id": "chart_trend",
+          "kind": "chart.line",
+          "title": "GMV 趋势",
+          "rect": { "x": 0, "y": 0, "w": 12, "h": 8 },
+          "binding": {
+            "datasetId": "ds_monthly",
+            "x": "month",
+            "y": ["gmv"],
+            "filters": [
+              {
+                "field": "month",
+                "op": "gte",
+                "paramRef": "p_month"
+              }
+            ]
+          },
+          "refresh": { "mode": "interval", "seconds": 300 }
+        },
+        {
+          "id": "chart_cat",
+          "kind": "chart.pie",
+          "title": "品类占比",
+          "rect": { "x": 12, "y": 0, "w": 12, "h": 8 },
+          "binding": {
+            "datasetId": "ds_category",
+            "label": "category",
+            "y": ["amount"]
+          }
+        }
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "id": "ds_kpi",
+      "name": "KPI 汇总",
+      "sourceRef": {
+        "type": "sql",
+        "connectionId": "c_mysql_1",
+        "sql": "SELECT SUM(amount)/10000 AS gmv FROM orders WHERE month = :month"
+      },
+      "cachePolicy": { "ttlSeconds": 300 }
+    },
+    {
+      "id": "ds_monthly",
+      "name": "月度 GMV",
+      "sourceRef": {
+        "type": "sql",
+        "connectionId": "c_mysql_1",
+        "sql": "SELECT month, SUM(amount)/10000 AS gmv FROM orders GROUP BY month"
+      },
+      "cachePolicy": { "ttlSeconds": 300 }
+    },
+    {
+      "id": "ds_category",
+      "name": "品类销售",
+      "sourceRef": {
+        "type": "table",
+        "connectionId": "c_mysql_1",
+        "schema": "ecommerce",
+        "table": "sales_by_category"
+      },
+      "cachePolicy": { "ttlSeconds": 600 }
+    }
+  ]
+}
